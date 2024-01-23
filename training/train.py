@@ -14,7 +14,6 @@ from datetime import datetime
 import pandas as pd
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
@@ -36,7 +35,7 @@ CONF_FILE = "settings.json"
 
 # Loads configuration settings from JSON
 try:
-    with open(CONF_FILE, "r") as file:
+    with open(CONF_FILE, "r", encoding="utf-8") as file:
         conf = json.load(file)
 except FileNotFoundError:
     print(f"Error: Configuration file {CONF_FILE} not found.")
@@ -52,14 +51,15 @@ TRAIN_PATH = os.path.join(DATA_DIR, conf['train']['table_name'])
 
 # Initializes parser for command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--train_file", 
-                    help="Specify inference data file", 
+parser.add_argument("--train_file",
+                    help="Specify inference data file",
                     default=conf['train']['table_name'])
-parser.add_argument("--model_path", 
+parser.add_argument("--model_path",
                     help="Specify the path for the output model")
 
 
 class DataProcessor:
+    """ Handles loading data, spliting data and converting to tensor"""
     def __init__(self) -> None:
         pass
 
@@ -71,8 +71,10 @@ class DataProcessor:
         # Downloading data
         data = self.data_extraction(data_path)
         feature_names = [
-            'sepal length (cm)', 'sepal width (cm)', 
-            'petal length (cm)', 'petal width (cm)'
+            'sepal length (cm)', 
+            'sepal width (cm)',
+            'petal length (cm)', 
+            'petal width (cm)'
         ]
 
         # Split data
@@ -142,7 +144,6 @@ class IrisClassifier(nn.Module):
 
 class Training:
     """Handles model training, evaluation, and saving."""
-
 
     def __init__(self, model: nn.Module) -> None:
         """Initialize the training class with a given model."""

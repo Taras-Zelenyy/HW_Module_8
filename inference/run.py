@@ -11,7 +11,6 @@ import pickle
 import sys
 import time
 from datetime import datetime
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -27,7 +26,7 @@ CONF_FILE = "settings.json"
 
 try:
     # Loads configuration settings from JSON
-    with open(CONF_FILE, "r") as file:
+    with open(CONF_FILE, "r", encoding="utf-8") as file:
         conf = json.load(file)
 except FileNotFoundError:
     print(f"Error: Configuration file {CONF_FILE} not found.")
@@ -39,7 +38,7 @@ except json.JSONDecodeError:
 from utils import get_project_dir, configure_logging
 
 # Loads configuration settings from JSON
-with open(CONF_FILE, "r") as file:
+with open(CONF_FILE, "r", encoding="utf-8") as file:
     conf = json.load(file)
 
 # Defines paths
@@ -49,28 +48,29 @@ RESULTS_DIR = get_project_dir(conf['general']['results_dir'])
 
 # Initializes parser for command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--infer_file", 
-                    help="Specify inference data file", 
+parser.add_argument("--infer_file",
+                    help="Specify inference data file",
                     default=conf['inference']['inp_table_name'])
-parser.add_argument("--out_path", 
+parser.add_argument("--out_path",
                     help="Specify the path to the output table")
 
 
 def get_latest_model_path() -> str:
     """Get the path of the latest saved model."""
     latest = None
-    for dirpath, _, filenames in os.walk(MODEL_DIR):
+    for _, _, filenames in os.walk(MODEL_DIR):
         for filename in filenames:
             if not latest or datetime.strptime(latest, conf['general']['datetime_format'] + '.pickle') < \
                     datetime.strptime(filename, conf['general']['datetime_format'] + '.pickle'):
                 latest = filename
-    if latest == None:
+    if latest is None:
         logging.error(f"No model found in {MODEL_DIR}.")
         sys.exit(1)
     return os.path.join(MODEL_DIR, latest)
 
 
 class CustomUnpickler(pickle.Unpickler):
+    """Custom Unpickler class to handle the unpickling of specific classes."""
     def find_class(self, module, name):
         if name == 'IrisClassifier':
             from training.train import IrisClassifier
@@ -86,7 +86,7 @@ def get_model_by_path(path: str):
             logging.info(f'Path of the model: {path}')
             return model
     except Exception as e:
-        logging.error(f'An error occurred while loading the model: {e}')
+        logging.error(f"An error occurred while loading the model: {e}")
         sys.exit(1)
 
 
@@ -102,13 +102,23 @@ def get_inference_data(path: str) -> pd.DataFrame:
 
 def predict_results(model, infer_data: pd.DataFrame) -> pd.DataFrame:
     """Predict results using the model and the inference data."""
-    X_inference = torch.tensor(infer_data[['sepal length (cm)', 'sepal width (cm)',
-                                           'petal length (cm)', 'petal width (cm)']].values, dtype=torch.float32)
+    x_inference = torch.tensor(
+        infer_data[
+            [
+                'sepal length (cm)', 
+                'sepal width (cm)',
+                'petal length (cm)', 
+                'petal width (cm)'
+            ]
+        ].values,
+        dtype=torch.float32
+    )
     model.eval()
     with torch.no_grad():
-        predicted = np.argmax(model(X_inference).numpy(), axis=1)
+        predicted = np.argmax(model(x_inference).numpy(), axis=1)    
     infer_data['predicted'] = predicted
     return infer_data
+
 
 
 def store_results(results: pd.DataFrame, path: str = None) -> None:
@@ -135,16 +145,15 @@ def main():
         model = get_model_by_path(get_latest_model_path())
     except Exception as e:
         logging.error(f"Error in model loading or processing: {e}")
-        sys.exit(1)      
+        sys.exit(1)
 
-    
     try:
         infer_file = args.infer_file
         infer_data = get_inference_data(os.path.join(DATA_DIR, infer_file))
     except Exception as e:
         logging.error(f"Error in loading inference data: {e}")
         sys.exit(1)
-    
+
     try:
         start_time = time.time()
         results = predict_results(model, infer_data)
@@ -153,13 +162,13 @@ def main():
     except Exception as e:
         logging.error(f"Error during inference: {e}")
         sys.exit(1)
-    
+
     try:
         store_results(results, args.out_path)
     except Exception as e:
         logging.error(f"Error during results storage: {e}")
         sys.exit(1)
-    
+
     logging.info(f'\nPrediction results:\n {results}')
 
 
