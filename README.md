@@ -164,6 +164,11 @@ docker run -dit inference_image
 ```
 After that ensure that you have your results in the `results` directory in your inference container.
 
+Then, move the results from the directory inside the Docker container `/app/results` to the local machine using(If at this point you do not have a `results` folder on your local machine, you must create one locally to ensure that the result is saved correctly.):
+```bash
+docker cp <container_id>:/app/models/<results_name>.csv ./results
+```
+
 2. Alternatively, you can also run the inference script locally:
 
 ```bash
