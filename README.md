@@ -22,7 +22,7 @@ Project configurations are managed using the `settings.json` file. It stores imp
 - constant values
 - hyperparameters for the ML model
 
-To pass the path to the configurator to the scripts, you need to create the `.env` file and manually initialize the environment variable as `CONF_PATH=settings.json'`. (This step is required for the correct construction of the Docker image)
+To pass the path to the configurator to the scripts, you need to create the `.env` file and manually initialize the environment variable as `CONF_PATH=settings.json`. (This step is required for the correct construction of the Docker image)
 
 ## Unittests
 Before you start working with the main code, you can try to test the main blocks of the project. 
