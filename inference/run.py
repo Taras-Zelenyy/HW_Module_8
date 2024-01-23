@@ -9,18 +9,32 @@ import logging
 import os
 import pickle
 import sys
+import time
 from datetime import datetime
 from typing import List
 
+import numpy as np
 import pandas as pd
-from sklearn.tree import DecisionTreeClassifier
+import torch
+
 
 # Adds the root directory to system path
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(ROOT_DIR))
 
 # Change to CONF_FILE = "settings.json" if you have problems with env variables
-CONF_FILE = os.getenv('CONF_PATH')
+CONF_FILE = "settings.json"
+
+try:
+    # Loads configuration settings from JSON
+    with open(CONF_FILE, "r") as file:
+        conf = json.load(file)
+except FileNotFoundError:
+    print(f"Error: Configuration file {CONF_FILE} not found.")
+    sys.exit(1)
+except json.JSONDecodeError:
+    print(f"Error: Configuration file {CONF_FILE} is not a valid JSON.")
+    sys.exit(1)
 
 from utils import get_project_dir, configure_logging
 
@@ -43,21 +57,32 @@ parser.add_argument("--out_path",
 
 
 def get_latest_model_path() -> str:
-    """Gets the path of the latest saved model"""
+    """Get the path of the latest saved model."""
     latest = None
-    for (dirpath, dirnames, filenames) in os.walk(MODEL_DIR):
+    for dirpath, _, filenames in os.walk(MODEL_DIR):
         for filename in filenames:
             if not latest or datetime.strptime(latest, conf['general']['datetime_format'] + '.pickle') < \
                     datetime.strptime(filename, conf['general']['datetime_format'] + '.pickle'):
                 latest = filename
+    if latest == None:
+        logging.error(f"No model found in {MODEL_DIR}.")
+        sys.exit(1)
     return os.path.join(MODEL_DIR, latest)
 
 
-def get_model_by_path(path: str) -> DecisionTreeClassifier:
-    """Loads and returns the specified model"""
+class CustomUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if name == 'IrisClassifier':
+            from training.train import IrisClassifier
+            return IrisClassifier
+        return super().find_class(module, name)
+
+
+def get_model_by_path(path: str):
+    """Load and return the specified model."""
     try:
         with open(path, 'rb') as f:
-            model = pickle.load(f)
+            model = CustomUnpickler(f).load()
             logging.info(f'Path of the model: {path}')
             return model
     except Exception as e:
@@ -66,7 +91,7 @@ def get_model_by_path(path: str) -> DecisionTreeClassifier:
 
 
 def get_inference_data(path: str) -> pd.DataFrame:
-    """loads and returns data for inference from the specified csv file"""
+    """Load and return data for inference from the specified csv file."""
     try:
         df = pd.read_csv(path)
         return df
@@ -75,36 +100,67 @@ def get_inference_data(path: str) -> pd.DataFrame:
         sys.exit(1)
 
 
-def predict_results(model: DecisionTreeClassifier, infer_data: pd.DataFrame) -> pd.DataFrame:
-    """Predict de results and join it with the infer_data"""
-    results = model.predict(infer_data)
-    infer_data['results'] = results
+def predict_results(model, infer_data: pd.DataFrame) -> pd.DataFrame:
+    """Predict results using the model and the inference data."""
+    X_inference = torch.tensor(infer_data[['sepal length (cm)', 'sepal width (cm)',
+                                           'petal length (cm)', 'petal width (cm)']].values, dtype=torch.float32)
+    model.eval()
+    with torch.no_grad():
+        predicted = np.argmax(model(X_inference).numpy(), axis=1)
+    infer_data['predicted'] = predicted
     return infer_data
 
 
 def store_results(results: pd.DataFrame, path: str = None) -> None:
-    """Store the prediction results in 'results' directory with current datetime as a filename"""
+    """Store the prediction results in the 'results' directory."""
     if not path:
         if not os.path.exists(RESULTS_DIR):
             os.makedirs(RESULTS_DIR)
         path = datetime.now().strftime(conf['general']['datetime_format']) + '.csv'
         path = os.path.join(RESULTS_DIR, path)
-    pd.DataFrame(results).to_csv(path, index=False)
-    logging.info(f'Results saved to {path}')
+    try:
+        pd.DataFrame(results).to_csv(path, index=False)
+        logging.info(f'Results saved to {path}')
+    except Exception as e:
+        logging.error(f"An error occurred while saving results: {e}")
+        sys.exit(1)
 
 
 def main():
-    """Main function"""
+    """Main function."""
     configure_logging()
     args = parser.parse_args()
 
-    model = get_model_by_path(get_latest_model_path())
-    infer_file = args.infer_file
-    infer_data = get_inference_data(os.path.join(DATA_DIR, infer_file))
-    results = predict_results(model, infer_data)
-    store_results(results, args.out_path)
+    try:
+        model = get_model_by_path(get_latest_model_path())
+    except Exception as e:
+        logging.error(f"Error in model loading or processing: {e}")
+        sys.exit(1)      
 
-    logging.info(f'Prediction results: {results}')
+    
+    try:
+        infer_file = args.infer_file
+        infer_data = get_inference_data(os.path.join(DATA_DIR, infer_file))
+    except Exception as e:
+        logging.error(f"Error in loading inference data: {e}")
+        sys.exit(1)
+    
+    try:
+        start_time = time.time()
+        results = predict_results(model, infer_data)
+        end_time = time.time()
+        logging.info(f"Inference completed in {end_time - start_time} seconds.")
+    except Exception as e:
+        logging.error(f"Error during inference: {e}")
+        sys.exit(1)
+    
+    try:
+        store_results(results, args.out_path)
+    except Exception as e:
+        logging.error(f"Error during results storage: {e}")
+        sys.exit(1)
+    
+    logging.info(f'\nPrediction results:\n {results}')
 
 
 if __name__ == "__main__":

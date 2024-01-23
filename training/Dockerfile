@@ -1,6 +1,4 @@
-# Dockerfile for training
-# Start from a base Python image
-FROM python:3.10
+FROM python:3.11.4
 
 # Initialize settings_name variable with the default value
 ARG settings_name=settings.json
@@ -10,7 +8,7 @@ ENV CONF_PATH=${settings_name}
 WORKDIR /app
 
 # Copy data folder to Docker
-COPY data/ /app/data
+COPY data /app/data
 
 # Copy the code itself
 COPY training /app/training
@@ -24,4 +22,4 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Train the model
-RUN python3 training/train.py
+CMD ["python3", "training/train.py"]

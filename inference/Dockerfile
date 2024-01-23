@@ -1,6 +1,6 @@
 # Dockerfile for training
 # Start from a base Python image
-FROM python:3.10
+FROM python:3.11.4
 
 ARG model_name=prod_model.pickle
 ARG settings_name=settings.json
@@ -12,10 +12,11 @@ WORKDIR /app
 COPY data/ /app/data
 
 # Copy models folder to Docker
-COPY models/${model_name} /app/models/${model_name}.pickle
+COPY models/${model_name} /app/models/${model_name}
 
 # Copy the code itself
 COPY inference /app/inference
+COPY training /app/training
 
 # Copy usefull scripts and configs
 COPY utils.py /app
@@ -26,4 +27,4 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Train the model
-RUN python3 inference/run.py
+CMD ["python3", "inference/run.py"]
