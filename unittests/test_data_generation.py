@@ -1,12 +1,9 @@
 import unittest
-import numpy as np
-import pandas as pd
 import os
 import sys
 import json
-import shutil
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
+
+import pandas as pd
 
 # Setting the path to the project root directory and configuration file
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,11 +13,12 @@ CONF_FILE = 'settings.json'
 from data_process.data_generation import IrisDataset  # Import your IrisDataset class
 from utils import get_project_dir
 
+
 class TestDataGeneration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Loading the configuration
-        with open(CONF_FILE, "r") as file:
+        with open(CONF_FILE, "r", encoding="utf-8") as file:
             conf = json.load(file)
         
         cls.data_dir = get_project_dir(conf['general']['data_dir'])

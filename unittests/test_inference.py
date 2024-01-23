@@ -1,11 +1,12 @@
 import unittest
 import os
 import sys
-import pandas as pd
-import numpy as np
-import torch
 import json
 import shutil
+
+import pandas as pd
+import numpy as np
+
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 
@@ -18,11 +19,12 @@ CONF_FILE = 'settings.json'
 from inference.run import get_model_by_path, get_inference_data, predict_results, store_results, get_latest_model_path
 from utils import get_project_dir
 
+
 class TestRunScript(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Loading the configuration
-        with open(CONF_FILE, "r") as file:
+        with open(CONF_FILE, "r", encoding="utf-8") as file:
             conf = json.load(file)
         
         cls.data_dir = get_project_dir(conf['general']['data_dir'])
@@ -42,6 +44,7 @@ class TestRunScript(unittest.TestCase):
     
     @staticmethod
     def create_temporary_test_data(inference_path, conf):
+        """Create temporary data for testing"""
         data = load_iris()
         df = pd.DataFrame(data=np.c_[data['data'], data['target']],
                           columns=data['feature_names'] + ['target'])
@@ -55,6 +58,7 @@ class TestRunScript(unittest.TestCase):
     
         
     def test_model_loading(self):
+        """Test the ability to load the latest model."""
         model_path = get_latest_model_path()
         self.assertIsNotNone(model_path, "Latest model path should be found.")
         
@@ -63,6 +67,7 @@ class TestRunScript(unittest.TestCase):
     
         
     def test_inference(self):
+        """Test the inference process with the latest model."""
         model_path = get_latest_model_path()
         self.assertIsNotNone(model_path, "Latest model path should be found.")
         
@@ -77,6 +82,8 @@ class TestRunScript(unittest.TestCase):
     
             
     def test_result_storage(self):
+        """Test the storage of inference results."""
+        
         # Define a temporary directory for testing
         test_results_dir = os.path.join(ROOT_DIR, "test_results")
         if not os.path.exists(test_results_dir):

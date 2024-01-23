@@ -96,6 +96,7 @@ class DataProcessor:
 
 
     def data_extraction(self, path: str) -> pd.DataFrame:
+        """Load and return a DataFrame from the specified CSV file."""
         logging.info(f"Loading data from {path}...")
         return pd.read_csv(path)
 
@@ -103,6 +104,10 @@ class DataProcessor:
     def split_data(
         self, dataset: pd.DataFrame, feature_names: list, test_size: float = 0.25
     ) -> tuple:
+        """
+        Split the dataset into training and test sets based
+        on the provided feature names and test size.
+        """
         logging.info("Splitting data into training and test sets...")
         X = dataset[feature_names]
         y = dataset['target']
@@ -117,8 +122,9 @@ class DataProcessor:
     def convert_to_tensors(
         self, X_train, y_train, X_test, y_test
     ):
+        """Convert training and test datasets from Pandas DataFrames/Series to PyTorch tensors."""
         logging.info("Converting data to tensors...")  
-        X_train_tensors = torch.tensor(X_train.values, dtype=torch.float32)
+        X_train_tensors = torch.tensor(X_train.values, dtype=torch.float32) 
         y_train_tensors = torch.tensor(y_train.values, dtype=torch.long)
         X_test_tensors = torch.tensor(X_test.values, dtype=torch.float32)
         y_test_tensors = torch.tensor(y_test.values, dtype=torch.long)
@@ -127,6 +133,8 @@ class DataProcessor:
 
 
 class IrisClassifier(nn.Module):
+    """Base line NN model"""
+    
     def __init__(self, input_dim: int, output_dim: int) -> None:
         super(IrisClassifier, self).__init__()
         self.input_layer = nn.Linear(in_features=input_dim, out_features=128)
