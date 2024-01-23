@@ -7,7 +7,7 @@ The project covers the following aspects:
 - Data preparation and NN training
 - Testing on inference data
 
-## Cloning progect from GitHub
+## Cloning project from GitHub
 To start working with this project, you should clone it to your local machine.
 
 To do this, use the following command via Git Bash or another method convenient for you:
