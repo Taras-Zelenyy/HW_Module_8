@@ -137,7 +137,7 @@ Then, move the trained model from the directory inside the Docker container `/ap
 ```bash
 docker cp <container_id>:/app/models/<model_name>.pickle ./models
 ```
-Replace `<container_id>` with your running Docker container ID and `<model_name>.pickle` with your model's name . `The name of the current model should be taken from the Logs in Docker Desktop`
+Replace `<container_id>` with your running Docker container ID and `<model_name>.pickle` with your model's name. `The name of the current model should be taken from the Logs in Docker Desktop`
 
 1. Alternatively, the `train.py` script can also be run locally as follows:
 
@@ -168,6 +168,7 @@ Then, move the results from the directory inside the Docker container `/app/resu
 ```bash
 docker cp <container_id>:/app/models/<results_name>.csv ./results
 ```
+Replace `<container_id>` with your running Docker container ID and `<results_name>.csv` with your result file name. `The name of the current result file should be taken from the Log on the Docker desktop `
 
 2. Alternatively, you can also run the inference script locally:
 
