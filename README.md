@@ -129,6 +129,10 @@ docker run -dit training_image
 ```
 ```You can see the logs in the Logs section of the Docker Desktop```
 
+Note: If you do not have a `models` folder at this step, you should create one, otherwise the trained model will not be saved correctly. 
+
+So create a `models` folder if you don't have one.
+
 Then, move the trained model from the directory inside the Docker container `/app/models` to the local machine using:
 ```bash
 docker cp <container_id>:/app/models/<model_name>.pickle ./models
