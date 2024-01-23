@@ -164,7 +164,7 @@ Then, move the results from the directory inside the Docker container `/app/resu
 ```bash
 docker cp <container_id>:/app/results/<results_name>.csv ./results
 ```
-Replace `<container_id>` with your running Docker container ID and `<results_name>.csv` with your result file name. `The name of the current result file should be taken from the Log on the Docker desktop `
+Replace `<container_id>` with your running Docker container ID and `<results_name>.csv` with your result file name. `The name of the current result file should be taken from the Logs on the Docker desktop `
 
 2. Alternatively, you can also run the inference script locally:
 
